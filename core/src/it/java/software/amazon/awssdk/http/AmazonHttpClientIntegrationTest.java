@@ -23,12 +23,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.optionsRequestedFo
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static utils.HttpTestUtils.builderWithDefaultClient;
 
 import org.junit.Before;
 import org.junit.Test;
-import software.amazon.awssdk.LegacyClientConfiguration;
 import software.amazon.awssdk.Request;
+import software.amazon.awssdk.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.config.MutableClientConfiguration;
+import utils.HttpTestUtils;
 import utils.http.WireMockTestBase;
 
 public class AmazonHttpClientIntegrationTest extends WireMockTestBase {
@@ -69,18 +70,19 @@ public class AmazonHttpClientIntegrationTest extends WireMockTestBase {
         Request<?> request = newRequest(OPERATION);
         request.setHttpMethod(HttpMethodName.OPTIONS);
 
-        AmazonHttpClient sut = builderWithDefaultClient()
-                .clientConfiguration(new LegacyClientConfiguration())
-                .build();
+        AmazonHttpClient sut = HttpTestUtils.testAmazonHttpClient();
         sut.requestExecutionBuilder().request(request).execute();
 
         verify(optionsRequestedFor(urlPathEqualTo(OPERATION)));
     }
 
     private AmazonHttpClient createClient(String headerName, String headerValue) {
-        LegacyClientConfiguration clientConfiguration = new LegacyClientConfiguration().withHeader(headerName, headerValue);
-        return builderWithDefaultClient()
-                .clientConfiguration(clientConfiguration)
-                .build();
+        ClientOverrideConfiguration overrideConfig =
+                ClientOverrideConfiguration.builder()
+                                           .addAdditionalHttpHeader(headerName, headerValue)
+                                           .build();
+        return AmazonHttpClient.builder()
+                               .syncClientConfiguration(new MutableClientConfiguration().overrideConfiguration(overrideConfig))
+                               .build();
     }
 }

@@ -25,10 +25,9 @@ import static org.mockito.Mockito.when;
 import static software.amazon.awssdk.internal.http.timers.ClientExecutionAndRequestTimerTestUtils.createMockGetRequest;
 import static software.amazon.awssdk.internal.http.timers.ClientExecutionAndRequestTimerTestUtils.execute;
 import static software.amazon.awssdk.internal.http.timers.ClientExecutionAndRequestTimerTestUtils.interruptCurrentThreadAfterDelay;
-import static software.amazon.awssdk.internal.http.timers.TimeoutTestConstants.CLIENT_EXECUTION_TIMEOUT;
 
 import java.io.InputStream;
-import java.util.List;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,8 +35,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import software.amazon.awssdk.AbortedException;
 import software.amazon.awssdk.AmazonClientException;
-import software.amazon.awssdk.LegacyClientConfiguration;
-import software.amazon.awssdk.handlers.RequestHandler;
 import software.amazon.awssdk.http.AbortableCallable;
 import software.amazon.awssdk.http.AmazonHttpClient;
 import software.amazon.awssdk.http.ExecutionContext;
@@ -46,9 +43,11 @@ import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.http.exception.ClientExecutionTimeoutException;
 import software.amazon.awssdk.http.server.MockServer;
-import software.amazon.awssdk.internal.http.request.RequestHandlerTestUtils;
-import software.amazon.awssdk.internal.http.request.SlowRequestHandler;
+import software.amazon.awssdk.interceptor.ExecutionInterceptor;
+import software.amazon.awssdk.interceptor.ExecutionInterceptorChain;
+import software.amazon.awssdk.internal.http.request.SlowExecutionInterceptor;
 import software.amazon.awssdk.internal.http.response.DummyResponseHandler;
+import utils.HttpTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AbortedExceptionClientExecutionTimerIntegrationTest extends MockServerTestBase {
@@ -64,12 +63,7 @@ public class AbortedExceptionClientExecutionTimerIntegrationTest extends MockSer
     @Before
     public void setup() throws Exception {
         when(sdkHttpClient.prepareRequest(any(), any())).thenReturn(abortableCallable);
-        httpClient = AmazonHttpClient.builder()
-                .clientConfiguration(new LegacyClientConfiguration()
-                                             .withClientExecutionTimeout(CLIENT_EXECUTION_TIMEOUT)
-                                             .withMaxErrorRetry(0))
-                .sdkHttpClient(sdkHttpClient)
-                .build();
+        httpClient = HttpTestUtils.testClientBuilder().httpClient(sdkHttpClient).build();
         when(abortableCallable.call()).thenReturn(SdkHttpFullResponse.builder()
                                                                      .statusCode(200)
                                                                      .build());
@@ -112,11 +106,9 @@ public class AbortedExceptionClientExecutionTimerIntegrationTest extends MockSer
                                                                      .content(mockContent)
                                                                      .build());
         interruptCurrentThreadAfterDelay(1000);
-        List<RequestHandler> requestHandlers = RequestHandlerTestUtils
-                .buildRequestHandlerList(new SlowRequestHandler().withAfterResponseWaitInSeconds(10));
         try {
             requestBuilder()
-                    .executionContext(withHandlers(requestHandlers))
+                    .executionContext(withInterceptors(new SlowExecutionInterceptor().afterTransmissionWaitInSeconds(10)))
                     .execute(new DummyResponseHandler().leaveConnectionOpen());
             fail("Expected exception");
         } catch (AmazonClientException e) {
@@ -130,7 +122,7 @@ public class AbortedExceptionClientExecutionTimerIntegrationTest extends MockSer
         return httpClient.requestExecutionBuilder().request(newGetRequest());
     }
 
-    private ExecutionContext withHandlers(List<RequestHandler> requestHandlers) {
-        return ExecutionContext.builder().withRequestHandlers(requestHandlers).build();
+    private ExecutionContext withInterceptors(ExecutionInterceptor... requestHandlers) {
+        return ExecutionContext.builder().interceptorChain(new ExecutionInterceptorChain(Arrays.asList(requestHandlers))).build();
     }
 }

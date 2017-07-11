@@ -15,8 +15,6 @@
 
 package software.amazon.awssdk.http;
 
-import static utils.HttpTestUtils.builderWithDefaultClient;
-
 import java.time.Duration;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.junit.AfterClass;
@@ -24,12 +22,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import software.amazon.awssdk.AmazonClientException;
-import software.amazon.awssdk.LegacyClientConfiguration;
 import software.amazon.awssdk.Request;
 import software.amazon.awssdk.http.apache.ApacheSdkHttpClientFactory;
 import software.amazon.awssdk.http.server.MockServer;
 import software.amazon.awssdk.internal.http.request.EmptyHttpRequest;
 import software.amazon.awssdk.internal.http.response.EmptyAWSResponseHandler;
+import utils.HttpTestUtils;
 
 public class ConnectionPoolMaxConnectionsIntegrationTest {
 
@@ -53,16 +51,14 @@ public class ConnectionPoolMaxConnectionsIntegrationTest {
 
         String localhostEndpoint = "http://localhost:" + server.getPort();
 
-        AmazonHttpClient httpClient =
-                builderWithDefaultClient()
-                                .sdkHttpClient(ApacheSdkHttpClientFactory.builder()
-                                                                         .connectionTimeout(Duration.ofMillis(100))
-                                                                         .maxConnections(1)
-                                                                         .build()
-                                                                         .createHttpClient())
-                                .clientConfiguration(new LegacyClientConfiguration()
-                                                             .withMaxErrorRetry(0))
-                                .build();
+        AmazonHttpClient httpClient = HttpTestUtils.testClientBuilder().httpClient(ApacheSdkHttpClientFactory.builder()
+                                                                                                             .connectionTimeout(
+                                                                                                                     Duration.ofMillis(
+                                                                                                                             100))
+                                                                                                             .maxConnections(1)
+                                                                                                             .build()
+                                                                                                             .createHttpClient())
+                                                   .build();
 
         Request<?> request = new EmptyHttpRequest(localhostEndpoint, HttpMethodName.GET);
 

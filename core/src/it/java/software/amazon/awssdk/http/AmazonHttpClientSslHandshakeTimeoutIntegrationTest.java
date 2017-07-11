@@ -27,9 +27,9 @@ import org.apache.http.protocol.HttpContext;
 import org.junit.Assert;
 import org.junit.Test;
 import software.amazon.awssdk.AmazonClientException;
-import software.amazon.awssdk.LegacyClientConfiguration;
 import software.amazon.awssdk.http.apache.ApacheSdkHttpClientFactory;
 import software.amazon.awssdk.internal.http.request.EmptyHttpRequest;
+import utils.HttpTestUtils;
 
 /**
  * This test is to verify that the apache-httpclient library has fixed the bug where socket timeout configuration is
@@ -44,13 +44,12 @@ public class AmazonHttpClientSslHandshakeTimeoutIntegrationTest extends Unrespon
 
     @Test(timeout = 60 * 1000)
     public void testSslHandshakeTimeout() {
-        AmazonHttpClient httpClient = AmazonHttpClient.builder()
-                                                      .sdkHttpClient(ApacheSdkHttpClientFactory.builder()
-                                                                                               .socketTimeout(CLIENT_SOCKET_TO)
-                                                                                               .build()
-                                                                                               .createHttpClient())
-                                                      .clientConfiguration(new LegacyClientConfiguration().withMaxErrorRetry(0))
-                                                      .build();
+        AmazonHttpClient httpClient = HttpTestUtils.testClientBuilder()
+                                                   .httpClient(ApacheSdkHttpClientFactory.builder()
+                                                                                         .socketTimeout(CLIENT_SOCKET_TO)
+                                                                                         .build()
+                                                                                         .createHttpClient())
+                                                   .build();
 
         System.out.println("Sending request to localhost...");
 

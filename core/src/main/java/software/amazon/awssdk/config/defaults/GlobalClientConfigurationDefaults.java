@@ -17,6 +17,7 @@ package software.amazon.awssdk.config.defaults;
 
 import static software.amazon.awssdk.config.AdvancedClientOption.USER_AGENT_PREFIX;
 import static software.amazon.awssdk.config.AdvancedClientOption.USER_AGENT_SUFFIX;
+import static software.amazon.awssdk.config.InternalAdvancedClientOption.CRC32_FROM_COMPRESSED_DATA_ENABLED;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +27,7 @@ import software.amazon.awssdk.config.ClientConfiguration;
 import software.amazon.awssdk.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.metrics.RequestMetricCollector;
 import software.amazon.awssdk.retry.PredefinedRetryPolicies;
+import software.amazon.awssdk.retry.RetryPolicyAdapter;
 import software.amazon.awssdk.util.VersionInfoUtils;
 
 /**
@@ -43,11 +45,16 @@ public final class GlobalClientConfigurationDefaults extends ClientConfiguration
     protected void applyOverrideDefaults(ClientOverrideConfiguration.Builder builder) {
         ClientOverrideConfiguration configuration = builder.build();
         builder.gzipEnabled(applyDefault(configuration.gzipEnabled(), () -> false));
+
         builder.advancedOption(USER_AGENT_PREFIX,
                                applyDefault(configuration.advancedOption(USER_AGENT_PREFIX), VersionInfoUtils::getUserAgent));
         builder.advancedOption(USER_AGENT_SUFFIX, applyDefault(configuration.advancedOption(USER_AGENT_SUFFIX), () -> ""));
+        builder.advancedOption(CRC32_FROM_COMPRESSED_DATA_ENABLED,
+                               applyDefault(configuration.advancedOption(CRC32_FROM_COMPRESSED_DATA_ENABLED), () -> false));
+
         builder.requestMetricCollector(applyDefault(configuration.requestMetricCollector(), () -> RequestMetricCollector.NONE));
-        builder.retryPolicy(applyDefault(configuration.retryPolicy(), () -> PredefinedRetryPolicies.DEFAULT));
+        builder.retryPolicy(applyDefault(configuration.retryPolicy(), () ->
+                new RetryPolicyAdapter(PredefinedRetryPolicies.DEFAULT)));
     }
 
     @Override

@@ -26,12 +26,13 @@ import software.amazon.awssdk.http.HttpResponse;
 import software.amazon.awssdk.http.HttpResponseHandler;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
+import software.amazon.awssdk.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.util.Throwables;
 import software.amazon.awssdk.utils.BinaryUtils;
 
 /**
  * Adapts an {@link HttpResponseHandler} to the asynchronous {@link SdkHttpResponseHandler}. Buffers
- * all content into a {@link ByteArrayInputStream} then invokes the {@link HttpResponseHandler#handle(HttpResponse)}
+ * all content into a {@link ByteArrayInputStream} then invokes the {@link HttpResponseHandler#handle}
  * method.
  *
  * @param <T> Type that the response handler produces.
@@ -41,12 +42,15 @@ public class SyncResponseHandlerAdapter<T> implements SdkHttpResponseHandler<T> 
     private final HttpResponseHandler<T> responseHandler;
     private ByteArrayOutputStream baos;
     private final Function<SdkHttpFullResponse, HttpResponse> httpResponseAdapter;
+    private final ExecutionAttributes executionAttributes;
     private HttpResponse httpResponse;
 
     public SyncResponseHandlerAdapter(HttpResponseHandler<T> responseHandler,
-                                      Function<SdkHttpFullResponse, HttpResponse> httpResponseAdapter) {
+                                      Function<SdkHttpFullResponse, HttpResponse> httpResponseAdapter,
+                                      ExecutionAttributes executionAttributes) {
         this.responseHandler = responseHandler;
         this.httpResponseAdapter = httpResponseAdapter;
+        this.executionAttributes = executionAttributes;
     }
 
     @Override
@@ -77,7 +81,7 @@ public class SyncResponseHandlerAdapter<T> implements SdkHttpResponseHandler<T> 
             if (baos != null) {
                 httpResponse.setContent(new ByteArrayInputStream(baos.toByteArray()));
             }
-            return responseHandler.handle(httpResponse);
+            return responseHandler.handle(httpResponse, executionAttributes);
         } catch (Exception e) {
             throw Throwables.failure(e);
         }

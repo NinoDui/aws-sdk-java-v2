@@ -5,10 +5,9 @@ import javax.annotation.Generated;
 import software.amazon.awssdk.AmazonServiceException;
 import software.amazon.awssdk.annotation.SdkInternalApi;
 import software.amazon.awssdk.client.AsyncClientHandler;
-import software.amazon.awssdk.client.AwsAsyncClientParams;
 import software.amazon.awssdk.client.ClientExecutionParams;
-import software.amazon.awssdk.client.ClientHandlerParams;
 import software.amazon.awssdk.client.SdkAsyncClientHandler;
+import software.amazon.awssdk.config.AsyncClientConfiguration;
 import software.amazon.awssdk.http.HttpResponseHandler;
 import software.amazon.awssdk.protocol.json.JsonClientMetadata;
 import software.amazon.awssdk.protocol.json.JsonErrorResponseMetadata;
@@ -41,9 +40,8 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
 
     private final SdkJsonProtocolFactory protocolFactory;
 
-    protected DefaultJsonAsyncClient(AwsAsyncClientParams clientParams) {
-        this.clientHandler = new SdkAsyncClientHandler(new ClientHandlerParams().withAsyncClientParams(clientParams)
-                .withClientParams(clientParams).withCalculateCrc32FromCompressedDataEnabled(false));
+    protected DefaultJsonAsyncClient(AsyncClientConfiguration clientConfiguration) {
+        this.clientHandler = new SdkAsyncClientHandler(clientConfiguration, null);
         this.protocolFactory = init();
     }
 
@@ -79,8 +77,8 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
         HttpResponseHandler<AmazonServiceException> errorResponseHandler = createErrorResponseHandler();
 
         return clientHandler.execute(new ClientExecutionParams<APostOperationRequest, APostOperationResponse>()
-                .withMarshaller(new APostOperationRequestMarshaller(protocolFactory)).withResponseHandler(responseHandler)
-                .withErrorResponseHandler(errorResponseHandler).withInput(aPostOperationRequest));
+                                             .withMarshaller(new APostOperationRequestMarshaller(protocolFactory)).withResponseHandler(responseHandler)
+                                             .withErrorResponseHandler(errorResponseHandler).withInput(aPostOperationRequest));
     }
 
     /**
@@ -117,9 +115,9 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
 
         return clientHandler
                 .execute(new ClientExecutionParams<APostOperationWithOutputRequest, APostOperationWithOutputResponse>()
-                        .withMarshaller(new APostOperationWithOutputRequestMarshaller(protocolFactory))
-                        .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
-                        .withInput(aPostOperationWithOutputRequest));
+                                 .withMarshaller(new APostOperationWithOutputRequestMarshaller(protocolFactory))
+                                 .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
+                                 .withInput(aPostOperationWithOutputRequest));
     }
 
     /**
@@ -196,12 +194,12 @@ final class DefaultJsonAsyncClient implements JsonAsyncClient {
 
     private software.amazon.awssdk.protocol.json.SdkJsonProtocolFactory init() {
         return new SdkJsonProtocolFactory(new JsonClientMetadata()
-                .withProtocolVersion("1.1")
-                .withSupportsCbor(false)
-                .withSupportsIon(false)
-                .withBaseServiceExceptionClass(software.amazon.awssdk.services.json.model.JsonException.class)
-                .addErrorMetadata(
-                        new JsonErrorShapeMetadata().withErrorCode("InvalidInput").withModeledClass(InvalidInputException.class)));
+                                                  .withProtocolVersion("1.1")
+                                                  .withSupportsCbor(false)
+                                                  .withSupportsIon(false)
+                                                  .withBaseServiceExceptionClass(software.amazon.awssdk.services.json.model.JsonException.class)
+                                                  .addErrorMetadata(
+                                                          new JsonErrorShapeMetadata().withErrorCode("InvalidInput").withModeledClass(InvalidInputException.class)));
     }
 
     private HttpResponseHandler<AmazonServiceException> createErrorResponseHandler() {

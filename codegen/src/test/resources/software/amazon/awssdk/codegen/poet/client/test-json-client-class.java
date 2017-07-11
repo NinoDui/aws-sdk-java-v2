@@ -6,11 +6,12 @@ import software.amazon.awssdk.SdkBaseException;
 import software.amazon.awssdk.SdkClientException;
 import software.amazon.awssdk.annotation.SdkInternalApi;
 import software.amazon.awssdk.auth.presign.PresignerParams;
-import software.amazon.awssdk.client.AwsSyncClientParams;
 import software.amazon.awssdk.client.ClientExecutionParams;
 import software.amazon.awssdk.client.ClientHandler;
-import software.amazon.awssdk.client.ClientHandlerParams;
 import software.amazon.awssdk.client.SdkClientHandler;
+import software.amazon.awssdk.config.AdvancedClientOption;
+import software.amazon.awssdk.config.ClientConfiguration;
+import software.amazon.awssdk.config.SyncClientConfiguration;
 import software.amazon.awssdk.http.HttpResponseHandler;
 import software.amazon.awssdk.protocol.json.JsonClientMetadata;
 import software.amazon.awssdk.protocol.json.JsonErrorResponseMetadata;
@@ -45,13 +46,12 @@ final class DefaultJsonClient implements JsonClient {
 
     private final SdkJsonProtocolFactory protocolFactory;
 
-    private final AwsSyncClientParams clientParams;
+    private final ClientConfiguration clientConfiguration;
 
-    protected DefaultJsonClient(AwsSyncClientParams clientParams) {
-        this.clientHandler = new SdkClientHandler(new ClientHandlerParams().withClientParams(clientParams)
-                .withCalculateCrc32FromCompressedDataEnabled(false));
-        this.clientParams = clientParams;
+    protected DefaultJsonClient(SyncClientConfiguration clientConfiguration) {
+        this.clientHandler = new SdkClientHandler(clientConfiguration, null);
         this.protocolFactory = init();
+        this.clientConfiguration = clientConfiguration;
     }
 
     /**
@@ -76,7 +76,7 @@ final class DefaultJsonClient implements JsonClient {
      */
     @Override
     public APostOperationResponse aPostOperation(APostOperationRequest aPostOperationRequest) throws InvalidInputException,
-            SdkBaseException, SdkClientException, JsonException {
+                                                                                                     SdkBaseException, SdkClientException, JsonException {
 
         HttpResponseHandler<APostOperationResponse> responseHandler = protocolFactory.createResponseHandler(
                 new JsonOperationMetadata().withPayloadJson(true), new APostOperationResponseUnmarshaller());
@@ -84,8 +84,8 @@ final class DefaultJsonClient implements JsonClient {
         HttpResponseHandler<AmazonServiceException> errorResponseHandler = createErrorResponseHandler();
 
         return clientHandler.execute(new ClientExecutionParams<APostOperationRequest, APostOperationResponse>()
-                .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
-                .withInput(aPostOperationRequest).withMarshaller(new APostOperationRequestMarshaller(protocolFactory)));
+                                             .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
+                                             .withInput(aPostOperationRequest).withMarshaller(new APostOperationRequestMarshaller(protocolFactory)));
     }
 
     /**
@@ -111,7 +111,7 @@ final class DefaultJsonClient implements JsonClient {
     @Override
     public APostOperationWithOutputResponse aPostOperationWithOutput(
             APostOperationWithOutputRequest aPostOperationWithOutputRequest) throws InvalidInputException, SdkBaseException,
-            SdkClientException, JsonException {
+                                                                                    SdkClientException, JsonException {
 
         HttpResponseHandler<APostOperationWithOutputResponse> responseHandler = protocolFactory.createResponseHandler(
                 new JsonOperationMetadata().withPayloadJson(true), new APostOperationWithOutputResponseUnmarshaller());
@@ -120,9 +120,9 @@ final class DefaultJsonClient implements JsonClient {
 
         return clientHandler
                 .execute(new ClientExecutionParams<APostOperationWithOutputRequest, APostOperationWithOutputResponse>()
-                        .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
-                        .withInput(aPostOperationWithOutputRequest)
-                        .withMarshaller(new APostOperationWithOutputRequestMarshaller(protocolFactory)));
+                                 .withResponseHandler(responseHandler).withErrorResponseHandler(errorResponseHandler)
+                                 .withInput(aPostOperationWithOutputRequest)
+                                 .withMarshaller(new APostOperationWithOutputRequestMarshaller(protocolFactory)));
     }
 
     /**
@@ -194,18 +194,19 @@ final class DefaultJsonClient implements JsonClient {
 
     private software.amazon.awssdk.protocol.json.SdkJsonProtocolFactory init() {
         return new SdkJsonProtocolFactory(new JsonClientMetadata()
-                .withProtocolVersion("1.1")
-                .withSupportsCbor(false)
-                .withSupportsIon(false)
-                .withBaseServiceExceptionClass(software.amazon.awssdk.services.json.model.JsonException.class)
-                .addErrorMetadata(
-                        new JsonErrorShapeMetadata().withErrorCode("InvalidInput").withModeledClass(InvalidInputException.class)));
+                                                  .withProtocolVersion("1.1")
+                                                  .withSupportsCbor(false)
+                                                  .withSupportsIon(false)
+                                                  .withBaseServiceExceptionClass(software.amazon.awssdk.services.json.model.JsonException.class)
+                                                  .addErrorMetadata(
+                                                          new JsonErrorShapeMetadata().withErrorCode("InvalidInput").withModeledClass(InvalidInputException.class)));
     }
 
     public AcmClientPresigners presigners() {
-        return new AcmClientPresigners(PresignerParams.builder().endpoint(clientParams.getEndpoint())
-                .credentialsProvider(clientParams.getCredentialsProvider()).signerProvider(clientParams.getSignerProvider())
-                .build());
+        return new AcmClientPresigners(PresignerParams.builder().endpoint(clientConfiguration.endpoint())
+                                                      .credentialsProvider(clientConfiguration.credentialsProvider())
+                                                      .signerProvider(clientConfiguration.overrideConfiguration().advancedOption(AdvancedClientOption.SIGNER_PROVIDER))
+                                                      .build());
     }
 
     @Override

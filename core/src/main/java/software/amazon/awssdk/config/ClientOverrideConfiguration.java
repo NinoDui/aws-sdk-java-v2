@@ -21,10 +21,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import software.amazon.awssdk.annotation.ReviewBeforeRelease;
-import software.amazon.awssdk.handlers.RequestHandler;
+import software.amazon.awssdk.interceptor.ExecutionInterceptor;
 import software.amazon.awssdk.metrics.RequestMetricCollector;
-import software.amazon.awssdk.retry.RetryPolicy;
+import software.amazon.awssdk.retry.v2.RetryPolicy;
 import software.amazon.awssdk.utils.AttributeMap;
 import software.amazon.awssdk.utils.CollectionUtils;
 import software.amazon.awssdk.utils.builder.CopyableBuilder;
@@ -44,7 +43,7 @@ public class ClientOverrideConfiguration
     private final Boolean gzipEnabled;
     private final RequestMetricCollector requestMetricCollector;
     private final RetryPolicy retryPolicy;
-    private final List<RequestHandler> requestListeners;
+    private final List<ExecutionInterceptor> executionInterceptors;
     private final AttributeMap advancedOptions;
 
     /**
@@ -53,11 +52,11 @@ public class ClientOverrideConfiguration
     private ClientOverrideConfiguration(DefaultClientOverrideConfigurationBuilder builder) {
         this.httpRequestTimeout = builder.httpRequestTimeout;
         this.totalExecutionTimeout = builder.totalExecutionTimeout;
-        this.additionalHttpHeaders = CollectionUtils.deepCopiedUnmodifiableMap(builder.additionalHttpHeaders);
+        this.additionalHttpHeaders = CollectionUtils.deepUnmodifiableMap(builder.additionalHttpHeaders);
         this.gzipEnabled = builder.gzipEnabled;
         this.requestMetricCollector = builder.requestMetricCollector;
         this.retryPolicy = builder.retryPolicy;
-        this.requestListeners = Collections.unmodifiableList(new ArrayList<>(builder.requestListeners));
+        this.executionInterceptors = Collections.unmodifiableList(new ArrayList<>(builder.executionInterceptors));
         this.advancedOptions = builder.advancedOptions.build();
     }
 
@@ -70,7 +69,7 @@ public class ClientOverrideConfiguration
                                                               .gzipEnabled(gzipEnabled)
                                                               .requestMetricCollector(requestMetricCollector)
                                                               .retryPolicy(retryPolicy)
-                                                              .requestListeners(requestListeners);
+                                                              .executionInterceptors(executionInterceptors);
     }
 
     /**
@@ -170,15 +169,13 @@ public class ClientOverrideConfiguration
     }
 
     /**
-     * An immutable collection of request listeners that should be hooked into the execution of each request, in the order that
-     * they should be applied.
+     * An immutable collection of {@link ExecutionInterceptor}s that should be hooked into the execution of each request, in the
+     * order that they should be applied.
      *
-     * @see Builder#requestListeners(List)
+     * @see Builder#executionInterceptors(List)
      */
-    @ReviewBeforeRelease("We are probably going to update the request handler interface. The description should be updated to "
-                         + "detail the functionality of the new interface.")
-    public List<RequestHandler> requestListeners() {
-        return requestListeners;
+    public List<ExecutionInterceptor> executionInterceptors() {
+        return executionInterceptors;
     }
 
     /**
@@ -270,20 +267,20 @@ public class ClientOverrideConfiguration
         Builder retryPolicy(RetryPolicy retryPolicy);
 
         /**
-         * Configure an immutable collection of request listeners that should be hooked into the execution of each request, in
-         * the order that they should be applied. These will override any listeners already configured.
+         * Configure an immutable collection of {@link ExecutionInterceptor}s that should be hooked into the execution of each
+         * request, in the order that they should be applied. These will override any listeners already configured.
          *
-         * @see ClientOverrideConfiguration#requestListeners()
+         * @see ClientOverrideConfiguration#executionInterceptors()
          */
-        Builder requestListeners(List<RequestHandler> requestListeners);
+        Builder executionInterceptors(List<ExecutionInterceptor> executionInterceptors);
 
         /**
          * Add a request listener that will be hooked into the execution of each request after the listeners that have previously
          * been configured have all been executed.
          *
-         * @see ClientOverrideConfiguration#requestListeners()
+         * @see ClientOverrideConfiguration#executionInterceptors()
          */
-        Builder addRequestListener(RequestHandler requestListener);
+        Builder addExecutionInterceptor(ExecutionInterceptor executionInterceptor);
 
         /**
          * Configure an advanced override option. These values are used very rarely, and the majority of SDK customers can ignore
@@ -312,7 +309,7 @@ public class ClientOverrideConfiguration
         private Boolean gzipEnabled;
         private RequestMetricCollector requestMetricCollector;
         private RetryPolicy retryPolicy;
-        private List<RequestHandler> requestListeners = new ArrayList<>();
+        private List<ExecutionInterceptor> executionInterceptors = new ArrayList<>();
         private AttributeMap.Builder advancedOptions = AttributeMap.builder();
 
         @Override
@@ -383,20 +380,20 @@ public class ClientOverrideConfiguration
         }
 
         @Override
-        public Builder requestListeners(List<RequestHandler> requestListeners) {
-            this.requestListeners.clear();
-            this.requestListeners.addAll(requestListeners);
+        public Builder executionInterceptors(List<ExecutionInterceptor> executionInterceptors) {
+            this.executionInterceptors.clear();
+            this.executionInterceptors.addAll(executionInterceptors);
             return this;
         }
 
         @Override
-        public Builder addRequestListener(RequestHandler requestListener) {
-            this.requestListeners.add(requestListener);
+        public Builder addExecutionInterceptor(ExecutionInterceptor executionInterceptors) {
+            this.executionInterceptors.add(executionInterceptors);
             return this;
         }
 
-        public void setRequestListeners(List<RequestHandler> requestListeners) {
-            requestListeners(requestListeners);
+        public void setExecutionInterceptors(List<ExecutionInterceptor> executionInterceptors) {
+            executionInterceptors(executionInterceptors);
         }
 
         @Override

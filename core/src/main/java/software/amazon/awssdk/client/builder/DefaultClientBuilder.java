@@ -31,7 +31,7 @@ import software.amazon.awssdk.config.ImmutableSyncClientConfiguration;
 import software.amazon.awssdk.config.MutableClientConfiguration;
 import software.amazon.awssdk.config.defaults.ClientConfigurationDefaults;
 import software.amazon.awssdk.config.defaults.GlobalClientConfigurationDefaults;
-import software.amazon.awssdk.handlers.HandlerChainFactory;
+import software.amazon.awssdk.handlers.ClasspathInterceptorChainFactory;
 import software.amazon.awssdk.http.AbortableCallable;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.SdkHttpClientFactory;
@@ -251,7 +251,7 @@ public abstract class DefaultClientBuilder<B extends ClientBuilder<B, C>, C>
              */
             @Override
             protected void applyOverrideDefaults(ClientOverrideConfiguration.Builder builder) {
-                new HandlerChainFactory().getGlobalHandlers().forEach(builder::addRequestListener);
+                new ClasspathInterceptorChainFactory().getGlobalInterceptors().forEach(builder::addExecutionInterceptor);
             }
         };
     }
