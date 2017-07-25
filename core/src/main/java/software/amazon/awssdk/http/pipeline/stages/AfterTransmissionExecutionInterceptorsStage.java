@@ -16,6 +16,7 @@
 package software.amazon.awssdk.http.pipeline.stages;
 
 import software.amazon.awssdk.RequestExecutionContext;
+import software.amazon.awssdk.http.AmazonHttpClient;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.http.pipeline.RequestPipeline;
@@ -39,6 +40,10 @@ public class AfterTransmissionExecutionInterceptorsStage
 
         // Store updated context
         context.executionContext().interceptorContext(interceptorContext);
+
+        // TODO: Why do we do this for sync, but not async? Are there other places it should be? Not having this fails the
+        // AbortedExceptionClientExecutionTimerIntegrationTest
+        AmazonHttpClient.checkInterrupted(interceptorContext.httpResponse());
 
         return input;
     }

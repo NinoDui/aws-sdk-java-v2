@@ -28,6 +28,7 @@ import static software.amazon.awssdk.internal.http.timers.ClientExecutionAndRequ
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import software.amazon.awssdk.AbortedException;
 import software.amazon.awssdk.AmazonClientException;
+import software.amazon.awssdk.SdkRequest;
 import software.amazon.awssdk.http.AbortableCallable;
 import software.amazon.awssdk.http.AmazonHttpClient;
 import software.amazon.awssdk.http.ExecutionContext;
@@ -43,10 +45,14 @@ import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.http.exception.ClientExecutionTimeoutException;
 import software.amazon.awssdk.http.server.MockServer;
+import software.amazon.awssdk.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.interceptor.ExecutionInterceptor;
 import software.amazon.awssdk.interceptor.ExecutionInterceptorChain;
+import software.amazon.awssdk.interceptor.context.InterceptorContext;
+import software.amazon.awssdk.internal.auth.NoOpSignerProvider;
 import software.amazon.awssdk.internal.http.request.SlowExecutionInterceptor;
 import software.amazon.awssdk.internal.http.response.DummyResponseHandler;
+import software.amazon.awssdk.util.AwsRequestMetricsFullSupport;
 import utils.HttpTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -123,6 +129,14 @@ public class AbortedExceptionClientExecutionTimerIntegrationTest extends MockSer
     }
 
     private ExecutionContext withInterceptors(ExecutionInterceptor... requestHandlers) {
-        return ExecutionContext.builder().interceptorChain(new ExecutionInterceptorChain(Arrays.asList(requestHandlers))).build();
+        return ExecutionContext.builder()
+                               .awsRequestMetrics(new AwsRequestMetricsFullSupport())
+                               .signerProvider(new NoOpSignerProvider())
+                               .interceptorChain(new ExecutionInterceptorChain(Collections.emptyList()))
+                               .executionAttributes(new ExecutionAttributes())
+                               .interceptorContext(InterceptorContext.builder().request(new SdkRequest()).build())
+                               .interceptorChain(new ExecutionInterceptorChain(Arrays.asList(requestHandlers)))
+
+                               .build();
     }
 }

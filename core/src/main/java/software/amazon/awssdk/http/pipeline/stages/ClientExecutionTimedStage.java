@@ -17,7 +17,6 @@ package software.amazon.awssdk.http.pipeline.stages;
 
 import static software.amazon.awssdk.utils.FunctionalUtils.invokeSafely;
 
-import java.util.Optional;
 import software.amazon.awssdk.AbortedException;
 import software.amazon.awssdk.AmazonWebServiceRequest;
 import software.amazon.awssdk.Request;
@@ -27,7 +26,6 @@ import software.amazon.awssdk.Response;
 import software.amazon.awssdk.SdkClientException;
 import software.amazon.awssdk.config.ClientConfiguration;
 import software.amazon.awssdk.http.HttpClientDependencies;
-import software.amazon.awssdk.http.HttpResponse;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.http.exception.ClientExecutionTimeoutException;
 import software.amazon.awssdk.http.exception.SdkInterruptedException;
@@ -90,10 +88,7 @@ public class ClientExecutionTimedStage<OutputT> implements RequestToResponsePipe
      */
     private RuntimeException handleInterruptedException(RequestExecutionContext context, InterruptedException e) {
         if (e instanceof SdkInterruptedException) {
-            Optional.ofNullable(((SdkInterruptedException) e).getResponse())
-                    .map(Response::getHttpResponse)
-                    .map(HttpResponse::getContent)
-                    .ifPresent(r -> invokeSafely(r::close));
+            ((SdkInterruptedException) e).getResponseStream().ifPresent(r -> invokeSafely(r::close));
         }
         if (context.clientExecutionTrackerTask().hasTimeoutExpired()) {
             // Clear the interrupt status

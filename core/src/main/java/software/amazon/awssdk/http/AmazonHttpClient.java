@@ -15,8 +15,6 @@
 
 package software.amazon.awssdk.http;
 
-import static software.amazon.awssdk.utils.Validate.paramNotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.AmazonServiceException;
@@ -179,7 +177,7 @@ public class AmazonHttpClient implements AutoCloseable {
      */
     // TODO address
     public static void checkInterrupted() throws InterruptedException {
-        checkInterrupted(null);
+        checkInterrupted((Response<?>) null);
     }
 
     /**
@@ -193,6 +191,22 @@ public class AmazonHttpClient implements AutoCloseable {
      */
     // TODO address
     public static void checkInterrupted(Response<?> response) throws InterruptedException {
+        if (Thread.interrupted()) {
+            throw new SdkInterruptedException(response);
+        }
+    }
+
+    /**
+     * Check if the thread has been interrupted. If so throw an {@link InterruptedException}.
+     * Long running tasks should be periodically checked if the current thread has been
+     * interrupted and handle it appropriately
+     *
+     * @param response Response to be closed before returning control to the caller to avoid
+     *                 leaking the connection.
+     * @throws InterruptedException If thread has been interrupted
+     */
+    // TODO address
+    public static void checkInterrupted(SdkHttpFullResponse response) throws InterruptedException {
         if (Thread.interrupted()) {
             throw new SdkInterruptedException(response);
         }

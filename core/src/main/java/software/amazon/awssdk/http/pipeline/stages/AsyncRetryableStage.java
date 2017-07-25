@@ -241,8 +241,11 @@ public class AsyncRetryableStage<OutputT> implements RequestPipeline<SdkHttpFull
              * Checking for clock skew error again because we don't want to set the global time offset
              * for every service exception.
              */
+
+            new Exception("Matt's wrapper", exception).printStackTrace();
             if (RetryUtils.isClockSkewError(exception)) {
                 int clockSkew = parseClockSkewOffset(response.getHttpResponse());
+                System.err.println("Matt: Updating clock skew - " + clockSkew);
                 dependencies.updateTimeOffset(clockSkew);
             }
             return exception;

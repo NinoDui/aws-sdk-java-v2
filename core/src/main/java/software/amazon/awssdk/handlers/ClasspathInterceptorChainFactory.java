@@ -15,15 +15,16 @@
 
 package software.amazon.awssdk.handlers;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import software.amazon.awssdk.AmazonClientException;
@@ -74,10 +75,24 @@ public final class ClasspathInterceptorChainFactory {
                 return Stream.empty();
             }
 
-            return Files.readAllLines(Paths.get(resource.toURI())).stream()
-                        .map(this::createExecutionInterceptor)
-                        .filter(Objects::nonNull);
-        } catch (IOException | URISyntaxException e) {
+            List<ExecutionInterceptor> interceptors = new ArrayList<>();
+
+            try (InputStream stream = resource.openStream();
+                 InputStreamReader streamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
+                 BufferedReader fileReader = new BufferedReader(streamReader)) {
+
+                String interceptorClassName = fileReader.readLine();
+                while (interceptorClassName != null) {
+                    ExecutionInterceptor interceptor = createExecutionInterceptor(interceptorClassName);
+                    if (interceptor != null) {
+                        interceptors.add(interceptor);
+                    }
+                    interceptorClassName = fileReader.readLine();
+                }
+            }
+
+            return interceptors.stream();
+        } catch (IOException e) {
             throw new AmazonClientException("Unable to instantiate execution interceptor chain.", e);
         }
     }

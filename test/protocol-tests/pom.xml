@@ -78,7 +78,7 @@
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
-            <artifactId>aws-http-nio-client-netty</artifactId>
+            <artifactId>netty-nio-client</artifactId>
             <version>${awsjavasdk.version}</version>
             <scope>test</scope>
         </dependency>

@@ -15,6 +15,8 @@
 
 package software.amazon.awssdk.http;
 
+import static software.amazon.awssdk.internal.http.timers.ClientExecutionAndRequestTimerTestUtils.executionContext;
+
 import java.time.Duration;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.junit.AfterClass;
@@ -27,6 +29,7 @@ import software.amazon.awssdk.http.apache.ApacheSdkHttpClientFactory;
 import software.amazon.awssdk.http.server.MockServer;
 import software.amazon.awssdk.internal.http.request.EmptyHttpRequest;
 import software.amazon.awssdk.internal.http.response.EmptyAWSResponseHandler;
+import software.amazon.awssdk.retry.PredefinedRetryPolicies;
 import utils.HttpTestUtils;
 
 public class ConnectionPoolMaxConnectionsIntegrationTest {
@@ -51,24 +54,32 @@ public class ConnectionPoolMaxConnectionsIntegrationTest {
 
         String localhostEndpoint = "http://localhost:" + server.getPort();
 
-        AmazonHttpClient httpClient = HttpTestUtils.testClientBuilder().httpClient(ApacheSdkHttpClientFactory.builder()
-                                                                                                             .connectionTimeout(
-                                                                                                                     Duration.ofMillis(
-                                                                                                                             100))
-                                                                                                             .maxConnections(1)
-                                                                                                             .build()
-                                                                                                             .createHttpClient())
+        AmazonHttpClient httpClient = HttpTestUtils.testClientBuilder()
+                                                   .clientExecutionTimeout(null)
+                                                   .retryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
+                                                   .httpClient(ApacheSdkHttpClientFactory.builder()
+                                                                                         .connectionTimeout(
+                                                                                                 Duration.ofMillis(100))
+                                                                                         .maxConnections(1)
+                                                                                         .build()
+                                                                                         .createHttpClient())
                                                    .build();
 
         Request<?> request = new EmptyHttpRequest(localhostEndpoint, HttpMethodName.GET);
 
         // Block the first connection in the pool with this request.
-        httpClient.requestExecutionBuilder().request(request).execute(new EmptyAWSResponseHandler());
+        httpClient.requestExecutionBuilder()
+                  .request(request)
+                  .executionContext(executionContext(SdkHttpFullRequestAdapter.toHttpFullRequest(request)))
+                  .execute(new EmptyAWSResponseHandler());
 
         try {
             // A new connection will be leased here which would fail in
             // ConnectionPoolTimeoutException.
-            httpClient.requestExecutionBuilder().request(request).execute();
+            httpClient.requestExecutionBuilder()
+                      .request(request)
+                      .executionContext(executionContext(SdkHttpFullRequestAdapter.toHttpFullRequest(request)))
+                      .execute();
             Assert.fail("Connection pool timeout exception is expected!");
         } catch (AmazonClientException e) {
             Assert.assertTrue(e.getCause() instanceof ConnectionPoolTimeoutException);

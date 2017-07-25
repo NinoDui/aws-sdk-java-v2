@@ -69,7 +69,7 @@ public class MessageMD5ChecksumInterceptor implements ExecutionInterceptor {
     private static final String MESSAGE_BODY = "message body";
     private static final String MESSAGE_ATTRIBUTES = "message attributes";
 
-    private static final Logger log = LoggerFactory.getLogger(MessageMD5ChecksumHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(MessageMD5ChecksumInterceptor.class);
 
     @Override
     public void afterUnmarshalling(AfterUnmarshallingContext execution, ExecutionAttributes executionAttributes) {
