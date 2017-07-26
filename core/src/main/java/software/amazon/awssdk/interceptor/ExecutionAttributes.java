@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ExecutionAttributes {
-    private Map<ExecutionAttribute<?>, Object> attributes = new HashMap<>();
+    private final Map<ExecutionAttribute<?>, Object> attributes = new HashMap<>();
 
     @SuppressWarnings("unchecked") // Cast is safe due to implementation of {@link #putAttribute}
     public <U> U getAttribute(ExecutionAttribute<U> attribute) {

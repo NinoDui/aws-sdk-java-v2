@@ -67,17 +67,13 @@ public final class SingleStringExecutionInterceptor implements ExecutionIntercep
             httpResponse.getContent(),
             new ByteArrayInputStream("</Policy>".getBytes(StandardCharsets.UTF_8))
         );
-        return httpResponse.toBuilder()
-                           .content(new SequenceInputStream(Collections.enumeration(streams)))
-                           .build();
+        return httpResponse.modify(b -> b.content(new SequenceInputStream(Collections.enumeration(streams))));
     }
 
     private SdkHttpFullResponse updateGetBucketLocationRequest(SdkHttpFullResponse httpResponse) {
         String contents = invokeSafely(() -> IoUtils.toString(httpResponse.getContent()));
         String newContents = contents.replace("<LocationConstraint", "<Wrap><LocationConstraint")
                                      .replace("</LocationConstraint>", "</LocationConstraint></Wrap>");
-        return httpResponse.toBuilder()
-                           .content(new ByteArrayInputStream(newContents.getBytes(StandardCharsets.UTF_8)))
-                           .build();
+        return httpResponse.modify(b -> b.content(new ByteArrayInputStream(newContents.getBytes(StandardCharsets.UTF_8))));
     }
 }

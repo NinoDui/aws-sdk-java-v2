@@ -16,9 +16,12 @@
 package software.amazon.awssdk.protocol.tests;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Matchers.any;
@@ -48,7 +51,6 @@ import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.interceptor.ExecutionInterceptor;
-import software.amazon.awssdk.interceptor.ExecutionInterceptorException;
 import software.amazon.awssdk.interceptor.context.AfterExecutionContext;
 import software.amazon.awssdk.interceptor.context.AfterMarshallingContext;
 import software.amazon.awssdk.interceptor.context.AfterTransmissionContext;
@@ -61,8 +63,8 @@ import software.amazon.awssdk.interceptor.context.FailedExecutionContext;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.protocolrestjson.ProtocolRestJsonAsyncClient;
 import software.amazon.awssdk.services.protocolrestjson.ProtocolRestJsonClient;
-import software.amazon.awssdk.services.protocolrestjson.model.AllTypesRequest;
-import software.amazon.awssdk.services.protocolrestjson.model.AllTypesResponse;
+import software.amazon.awssdk.services.protocolrestjson.model.MembersInHeadersRequest;
+import software.amazon.awssdk.services.protocolrestjson.model.MembersInHeadersResponse;
 
 /**
  * Verify that request handler hooks are behaving as expected.
@@ -71,7 +73,7 @@ public class ExecutionInterceptorTest {
     @Rule
     public WireMockRule wireMock = new WireMockRule(0);
 
-    private static final String ALL_TYPES_PATH = "/2016-03-11/allTypes";
+    private static final String MEMBERS_IN_HEADERS_PATH = "/2016-03-11/membersInHeaders";
 
     @Test
     public void successInterceptorMethodsCalledWithSyncClient() {
@@ -79,11 +81,11 @@ public class ExecutionInterceptorTest {
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
 
         ProtocolRestJsonClient client = client(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
-        stubFor(post(urlPathEqualTo(ALL_TYPES_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
+        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
 
         // When
-        AllTypesResponse result = client.allTypes(request);
+        MembersInHeadersResponse result = client.membersInHeaders(request);
 
         // Expect
         expectAllMethodsCalled(interceptor, request, result, null);
@@ -95,11 +97,11 @@ public class ExecutionInterceptorTest {
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
 
         ProtocolRestJsonAsyncClient client = asyncClient(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
-        stubFor(post(urlPathEqualTo(ALL_TYPES_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
+        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
 
         // When
-        AllTypesResponse result = client.allTypes(request).get();
+        MembersInHeadersResponse result = client.membersInHeaders(request).get();
 
         // Expect
         expectAllMethodsCalled(interceptor, request, result, null);
@@ -111,10 +113,10 @@ public class ExecutionInterceptorTest {
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
 
         ProtocolRestJsonClient client = client(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
 
         // When
-        assertThatExceptionOfType(AmazonServiceException.class).isThrownBy(() -> client.allTypes(request));
+        assertThatExceptionOfType(AmazonServiceException.class).isThrownBy(() -> client.membersInHeaders(request));
 
         // Expect
         expectServiceCallErrorMethodsCalled(interceptor);
@@ -126,10 +128,10 @@ public class ExecutionInterceptorTest {
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
 
         ProtocolRestJsonAsyncClient client = asyncClient(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
 
         // When
-        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> client.allTypes(request).get())
+        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> client.membersInHeaders(request).get())
                                                            .withCauseInstanceOf(AmazonServiceException.class);
 
         // Expect
@@ -140,15 +142,15 @@ public class ExecutionInterceptorTest {
     public void interceptorExceptionCallsOnFailureWithSyncClient() {
         // Given
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
-        ExecutionInterceptorException exception = new ExecutionInterceptorException("Uh oh!");
+        RuntimeException exception = new RuntimeException("Uh oh!");
         doThrow(exception).when(interceptor).afterExecution(any(), any());
 
         ProtocolRestJsonClient client = client(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
-        stubFor(post(urlPathEqualTo(ALL_TYPES_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
+        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
 
         // When
-        assertThatExceptionOfType(ExecutionInterceptorException.class).isThrownBy(() -> client.allTypes(request));
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> client.membersInHeaders(request));
 
         // Expect
         expectAllMethodsCalled(interceptor, request, null, exception);
@@ -158,15 +160,15 @@ public class ExecutionInterceptorTest {
     public void interceptorExceptionCallsOnFailureWithAsyncClient() {
         // Given
         ExecutionInterceptor interceptor = mock(MessageUpdatingInterceptor.class, CALLS_REAL_METHODS);
-        ExecutionInterceptorException exception = new ExecutionInterceptorException("Uh oh!");
+        RuntimeException exception = new RuntimeException("Uh oh!");
         doThrow(exception).when(interceptor).afterExecution(any(), any());
 
         ProtocolRestJsonAsyncClient client = asyncClient(interceptor);
-        AllTypesRequest request = AllTypesRequest.builder().build();
-        stubFor(post(urlPathEqualTo(ALL_TYPES_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+        MembersInHeadersRequest request = MembersInHeadersRequest.builder().build();
+        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
 
         // When
-        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> client.allTypes(request).get())
+        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> client.membersInHeaders(request).get())
                                                            .withCause(exception);
 
         // Expect
@@ -174,7 +176,7 @@ public class ExecutionInterceptorTest {
     }
 
     private void expectAllMethodsCalled(ExecutionInterceptor interceptor,
-                                        SdkRequest inputRequest, AllTypesResponse outputResponse,
+                                        SdkRequest inputRequest, MembersInHeadersResponse outputResponse,
                                         Exception expectedException) {
         ArgumentCaptor<ExecutionAttributes> attributes = ArgumentCaptor.forClass(ExecutionAttributes.class);
 
@@ -230,6 +232,9 @@ public class ExecutionInterceptorTest {
         validateArgs(modifyResponseArg.getValue(), "1", "2", "3", null);
         validateArgs(afterExecutionArg.getValue(), "1", "2", "3", "4");
 
+        verify(postRequestedFor(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).withHeader("x-amz-integer", equalTo("2")));
+        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+
         // Verify afterExecution gets same response as the one returned by client
         if (expectedException == null) {
             assertThat(outputResponse.stringMember()).isEqualTo("4");
@@ -271,19 +276,22 @@ public class ExecutionInterceptorTest {
 
     private void verifyFailedExecutionMethodCalled(ArgumentCaptor<FailedExecutionContext> failedExecutionArg,
                                                    boolean expectResponse) {
-        AllTypesRequest failedRequest = (AllTypesRequest) failedExecutionArg.getValue().request();
+        MembersInHeadersRequest failedRequest = (MembersInHeadersRequest) failedExecutionArg.getValue().request();
 
 
         assertThat(failedRequest.stringMember()).isEqualTo("1");
         assertThat(failedExecutionArg.getValue().httpRequest()).hasValueSatisfying(httpRequest -> {
-            assertThat(httpRequest.getFirstHeaderValue("Foo")).hasValue("2");
+            assertThat(httpRequest.getFirstHeaderValue("x-amz-string")).hasValue("1");
+            assertThat(httpRequest.getFirstHeaderValue("x-amz-integer")).hasValue("2");
         });
         assertThat(failedExecutionArg.getValue().httpResponse()).hasValueSatisfying(httpResponse -> {
-            assertThat(httpResponse.getFirstHeaderValue("Foo")).hasValue("3");
+            assertThat(httpResponse.getFirstHeaderValue("x-amz-integer")).hasValue("3");
+            assertThat(httpResponse.getFirstHeaderValue("x-amz-string")).hasValue("4");
         });
 
         if (expectResponse) {
-            assertThat(failedExecutionArg.getValue().response().map(AllTypesResponse.class::cast)).hasValueSatisfying(response -> {
+            assertThat(failedExecutionArg.getValue().response().map(MembersInHeadersResponse.class::cast)).hasValueSatisfying(response -> {
+                assertThat(response.integerMember()).isEqualTo("3");
                 assertThat(response.stringMember()).isEqualTo("4");
             });
         } else {
@@ -293,28 +301,30 @@ public class ExecutionInterceptorTest {
 
     private void validateArgs(BeforeExecutionContext context,
                               String expectedStringMemberValue) {
-        AllTypesRequest request = (AllTypesRequest) context.request();
+        MembersInHeadersRequest request = (MembersInHeadersRequest) context.request();
         assertThat(request.stringMember()).isEqualTo(expectedStringMemberValue);
     }
 
     private void validateArgs(AfterMarshallingContext context,
-                              String expectedStringMemberValue, String expectedFooHeaderValue) {
+                              String expectedStringMemberValue, String expectedIntegerHeaderValue) {
         validateArgs(context, expectedStringMemberValue);
-        assertThat(context.httpRequest().getFirstHeaderValue("Foo")).isEqualTo(Optional.ofNullable(expectedFooHeaderValue));
+        assertThat(context.httpRequest().getFirstHeaderValue("x-amz-integer")).isEqualTo(Optional.ofNullable(expectedIntegerHeaderValue));
+        assertThat(context.httpRequest().getFirstHeaderValue("x-amz-string")).isEqualTo(Optional.ofNullable(expectedStringMemberValue));
     }
 
     private void validateArgs(AfterTransmissionContext context,
-                              String expectedStringMemberValue, String expectedFooHeaderValue,
-                              String expectedResponseFooHeaderValue) {
-        validateArgs(context, expectedStringMemberValue, expectedFooHeaderValue);
-        assertThat(context.httpResponse().getFirstHeaderValue("Foo")).isEqualTo(Optional.ofNullable(expectedResponseFooHeaderValue));
+                              String expectedStringMemberValue, String expectedIntegerHeaderValue,
+                              String expectedResponseIntegerHeaderValue) {
+        validateArgs(context, expectedStringMemberValue, expectedIntegerHeaderValue);
+        assertThat(context.httpResponse().getFirstHeaderValue("x-amz-integer")).isEqualTo(Optional.ofNullable(expectedResponseIntegerHeaderValue));
     }
 
     private void validateArgs(AfterUnmarshallingContext context,
-                              String expectedStringMemberValue, String expectedFooHeaderValue,
-                              String expectedResponseFooHeaderValue, String expectedResponseStringMemberValue) {
-        validateArgs(context, expectedStringMemberValue, expectedFooHeaderValue, expectedResponseFooHeaderValue);
-        AllTypesResponse response = (AllTypesResponse) context.response();
+                              String expectedStringMemberValue, String expectedIntegerHeaderValue,
+                              String expectedResponseIntegerHeaderValue, String expectedResponseStringMemberValue) {
+        validateArgs(context, expectedStringMemberValue, expectedIntegerHeaderValue, expectedResponseIntegerHeaderValue);
+        MembersInHeadersResponse response = (MembersInHeadersResponse) context.response();
+        assertThat(response.integerMember()).isEqualTo(expectedResponseIntegerHeaderValue);
         assertThat(response.stringMember()).isEqualTo(expectedResponseStringMemberValue);
     }
 
@@ -338,31 +348,28 @@ public class ExecutionInterceptorTest {
 
     private static class MessageUpdatingInterceptor implements ExecutionInterceptor {
         @Override
-        public SdkRequest modifyRequest(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes)
-                throws ExecutionInterceptorException {
-            AllTypesRequest request = (AllTypesRequest) execution.request();
+        public SdkRequest modifyRequest(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes) {
+            MembersInHeadersRequest request = (MembersInHeadersRequest) execution.request();
             return request.modify(b -> b.stringMember("1"));
         }
 
         @Override
-        public SdkHttpFullRequest modifyHttpRequest(BeforeTransmissionContext execution, ExecutionAttributes executionAttributes)
-                throws ExecutionInterceptorException {
+        public SdkHttpFullRequest modifyHttpRequest(BeforeTransmissionContext execution,
+                                                    ExecutionAttributes executionAttributes) {
             SdkHttpFullRequest httpRequest = execution.httpRequest();
-            return httpRequest.modify(b -> b.header("Foo", "2"));
+            return httpRequest.modify(b -> b.header("x-amz-integer", "2"));
         }
 
         @Override
         public SdkHttpFullResponse modifyHttpResponse(BeforeUnmarshallingContext execution,
-                                                      ExecutionAttributes executionAttributes)
-                throws ExecutionInterceptorException {
+                                                      ExecutionAttributes executionAttributes) {
             SdkHttpFullResponse httpResponse = execution.httpResponse();
-            return httpResponse.modify(b -> b.addHeader("Foo", Collections.singletonList("3")));
+            return httpResponse.modify(b -> b.addHeader("x-amz-integer", Collections.singletonList("3")));
         }
 
         @Override
-        public SdkResponse modifyResponse(AfterExecutionContext execution, ExecutionAttributes executionAttributes)
-                throws ExecutionInterceptorException {
-            AllTypesResponse response = (AllTypesResponse) execution.response();
+        public SdkResponse modifyResponse(AfterExecutionContext execution, ExecutionAttributes executionAttributes) {
+            MembersInHeadersResponse response = (MembersInHeadersResponse) execution.response();
             return response.modify(b -> b.stringMember("4"));
         }
     }

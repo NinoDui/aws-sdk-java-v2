@@ -18,7 +18,6 @@ package software.amazon.awssdk.interceptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import software.amazon.awssdk.SdkRequest;
 import software.amazon.awssdk.SdkResponse;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
@@ -35,68 +34,62 @@ public class ExecutionInterceptorChain {
     }
 
     public void beforeExecution(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> interceptors.forEach(i -> i.beforeExecution(context, executionAttributes)));
+        interceptors.forEach(i -> i.beforeExecution(context, executionAttributes));
     }
 
     public InterceptorContext modifyRequest(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        return tryOrThrowInterceptorException(() -> {
-            InterceptorContext result = context;
-            for (ExecutionInterceptor interceptor : interceptors) {
-                SdkRequest interceptorResult = interceptor.modifyRequest(context, executionAttributes);
-                validateInterceptorResult(context.request(), interceptorResult, interceptor, "modifyRequest");
+        InterceptorContext result = context;
+        for (ExecutionInterceptor interceptor : interceptors) {
+            SdkRequest interceptorResult = interceptor.modifyRequest(context, executionAttributes);
+            validateInterceptorResult(context.request(), interceptorResult, interceptor, "modifyRequest");
 
-                result = context.modify(b -> b.request(interceptorResult));
-            }
-            return result;
-        });
+            result = context.modify(b -> b.request(interceptorResult));
+        }
+        return result;
     }
 
     public void beforeMarshalling(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> interceptors.forEach(i -> i.beforeMarshalling(context, executionAttributes)));
+        interceptors.forEach(i -> i.beforeMarshalling(context, executionAttributes));
     }
 
     public void afterMarshalling(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> interceptors.forEach(i -> i.afterMarshalling(context, executionAttributes)));
+        interceptors.forEach(i -> i.afterMarshalling(context, executionAttributes));
     }
 
     public InterceptorContext modifyHttpRequest(InterceptorContext context,
                                                 ExecutionAttributes executionAttributes) {
-        return tryOrThrowInterceptorException(() -> {
-            InterceptorContext result = context;
-            for (ExecutionInterceptor interceptor : interceptors) {
-                SdkHttpFullRequest interceptorResult = interceptor.modifyHttpRequest(context, executionAttributes);
-                validateInterceptorResult(context.httpRequest(), interceptorResult, interceptor, "modifyHttpRequest");
+        InterceptorContext result = context;
+        for (ExecutionInterceptor interceptor : interceptors) {
+            SdkHttpFullRequest interceptorResult = interceptor.modifyHttpRequest(context, executionAttributes);
+            validateInterceptorResult(context.httpRequest(), interceptorResult, interceptor, "modifyHttpRequest");
 
-                result = context.modify(b -> b.httpRequest(interceptorResult));
-            }
-            return result;
-        });
+            result = context.modify(b -> b.httpRequest(interceptorResult));
+        }
+        return result;
     }
 
     public void beforeTransmission(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> interceptors.forEach(i -> i.beforeTransmission(context, executionAttributes)));
+        interceptors.forEach(i -> i.beforeTransmission(context, executionAttributes));
     }
 
     public void afterTransmission(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> reverseForEach(i -> i.afterTransmission(context, executionAttributes)));
+        reverseForEach(i -> i.afterTransmission(context, executionAttributes));
     }
 
     public InterceptorContext modifyHttpResponse(InterceptorContext context,
                                                  ExecutionAttributes executionAttributes) {
-        return tryOrThrowInterceptorException(() -> {
-            InterceptorContext result = context;
-            for (int i = interceptors.size() - 1; i >= 0; i--) {
-                SdkHttpFullResponse interceptorResult = interceptors.get(i).modifyHttpResponse(context, executionAttributes);
-                validateInterceptorResult(context.httpResponse(), interceptorResult, interceptors.get(i), "modifyHttpResponse");
+        InterceptorContext result = context;
+        for (int i = interceptors.size() - 1; i >= 0; i--) {
+            SdkHttpFullResponse interceptorResult = interceptors.get(i).modifyHttpResponse(context, executionAttributes);
+            validateInterceptorResult(context.httpResponse(), interceptorResult, interceptors.get(i), "modifyHttpResponse");
 
-                result = context.modify(b -> b.httpResponse(interceptorResult));
-            }
-            return result;
-        });
+            result = context.modify(b -> b.httpResponse(interceptorResult));
+        }
+        return result;
     }
 
     public void beforeUnmarshalling(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> reverseForEach(i -> i.beforeUnmarshalling(context, executionAttributes)));
+        reverseForEach(i -> i.beforeUnmarshalling(context, executionAttributes));
     }
 
     public void afterUnmarshalling(InterceptorContext context, ExecutionAttributes executionAttributes) {
@@ -104,24 +97,22 @@ public class ExecutionInterceptorChain {
     }
 
     public InterceptorContext modifyResponse(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        return tryOrThrowInterceptorException(() -> {
-            InterceptorContext result = context;
-            for (int i = interceptors.size() - 1; i >= 0; i--) {
-                SdkResponse interceptorResult = interceptors.get(i).modifyResponse(context, executionAttributes);
-                validateInterceptorResult(context.response(), interceptorResult, interceptors.get(i), "modifyResponse");
+        InterceptorContext result = context;
+        for (int i = interceptors.size() - 1; i >= 0; i--) {
+            SdkResponse interceptorResult = interceptors.get(i).modifyResponse(context, executionAttributes);
+            validateInterceptorResult(context.response(), interceptorResult, interceptors.get(i), "modifyResponse");
 
-                result = context.modify(b -> b.response(interceptorResult));
-            }
-            return result;
-        });
+            result = context.modify(b -> b.response(interceptorResult));
+        }
+        return result;
     }
 
     public void afterExecution(InterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> reverseForEach(i -> i.afterExecution(context, executionAttributes)));
+        reverseForEach(i -> i.afterExecution(context, executionAttributes));
     }
 
     public void onExecutionFailure(DefaultFailedExecutionInterceptorContext context, ExecutionAttributes executionAttributes) {
-        tryOrThrowInterceptorException(() -> interceptors.forEach(i -> i.onExecutionFailure(context, executionAttributes)));
+        interceptors.forEach(i -> i.onExecutionFailure(context, executionAttributes));
     }
 
     private void validateInterceptorResult(Object originalMessage, Object newMessage,
@@ -132,23 +123,6 @@ public class ExecutionInterceptorChain {
         Validate.isInstanceOf(originalMessage.getClass(), newMessage,
                               "Request interceptor '%s' returned '%s' from its %s method, but '%s' was expected.",
                               interceptor, newMessage.getClass(), methodName, originalMessage.getClass());
-    }
-
-    private <T> T tryOrThrowInterceptorException(Supplier<T> function) {
-        try {
-            return function.get();
-        } catch (ExecutionInterceptorException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw new ExecutionInterceptorException("An exception was caused by an execution interceptor.", e);
-        }
-    }
-
-    private void tryOrThrowInterceptorException(Runnable function) {
-        tryOrThrowInterceptorException(() -> {
-            function.run();
-            return null;
-        });
     }
 
     private void reverseForEach(Consumer<ExecutionInterceptor> action) {

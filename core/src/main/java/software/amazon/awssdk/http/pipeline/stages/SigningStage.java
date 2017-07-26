@@ -98,13 +98,11 @@ public class SigningStage implements RequestToRequestPipeline {
     }
 
     /**
-     * Always use the client level timeOffset if it's non-zero. Otherwise, we respect the timeOffset in the request, which could
-     * have been externally configured (at least for the 1st non-retry request).
+     * Always use the client level timeOffset.
      */
     private void adjustForClockSkew(ExecutionAttributes attributes) {
-        if (dependencies.timeOffset() != 0) {
-            attributes.putAttribute(AwsExecutionAttributes.TIME_OFFSET, dependencies.timeOffset());
-        }
+        // TODO: Should we allow customers to specify the initial time offset?
+        attributes.putAttribute(AwsExecutionAttributes.TIME_OFFSET, dependencies.timeOffset());
     }
 
 }

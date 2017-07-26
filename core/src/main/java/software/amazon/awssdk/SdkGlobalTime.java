@@ -49,7 +49,6 @@ public class SdkGlobalTime {
      *            the time difference in seconds between the running JVM and AWS
      */
     public static void setGlobalTimeOffset(int timeOffset) {
-        System.err.println("Matt: ");
         globalTimeOffset = timeOffset;
     }
 }

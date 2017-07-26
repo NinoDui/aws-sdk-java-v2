@@ -15,13 +15,11 @@
 
 package software.amazon.awssdk.internal.http.request;
 
-import software.amazon.awssdk.interceptor.ExecutionInterceptorException;
-import software.amazon.awssdk.interceptor.context.AfterTransmissionContext;
 import software.amazon.awssdk.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.interceptor.ExecutionInterceptor;
-import software.amazon.awssdk.interceptor.context.AfterUnmarshallingContext;
-import software.amazon.awssdk.interceptor.context.FailedExecutionContext;
+import software.amazon.awssdk.interceptor.context.AfterTransmissionContext;
 import software.amazon.awssdk.interceptor.context.BeforeTransmissionContext;
+import software.amazon.awssdk.interceptor.context.FailedExecutionContext;
 
 /**
  * Implementation of {@link ExecutionInterceptor} with configurable wait times

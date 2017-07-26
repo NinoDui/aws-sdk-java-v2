@@ -74,70 +74,56 @@ public interface ExecutionInterceptor {
      * @param executionAttributes A mutable set of attributes scoped to one specific request/response cycle that can be used to
      *                            give data to future lifecycle methods.
      */
-    default void beforeExecution(BeforeExecutionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void beforeExecution(BeforeExecutionContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default SdkRequest modifyRequest(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default SdkRequest modifyRequest(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes) {
         return execution.request();
     }
 
-    default void beforeMarshalling(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void beforeMarshalling(BeforeMarshallingContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default void afterMarshalling(AfterMarshallingContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void afterMarshalling(AfterMarshallingContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default SdkHttpFullRequest modifyHttpRequest(BeforeTransmissionContext execution,
-                                                 ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default SdkHttpFullRequest modifyHttpRequest(BeforeTransmissionContext execution, ExecutionAttributes executionAttributes) {
         return execution.httpRequest();
     }
 
-    default void beforeTransmission(BeforeTransmissionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void beforeTransmission(BeforeTransmissionContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default void afterTransmission(AfterTransmissionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void afterTransmission(AfterTransmissionContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
     default SdkHttpFullResponse modifyHttpResponse(BeforeUnmarshallingContext execution,
-                                                   ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+                                                   ExecutionAttributes executionAttributes) {
         return execution.httpResponse();
     }
 
-    default void beforeUnmarshalling(BeforeUnmarshallingContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void beforeUnmarshalling(BeforeUnmarshallingContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default void afterUnmarshalling(AfterUnmarshallingContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void afterUnmarshalling(AfterUnmarshallingContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default SdkResponse modifyResponse(AfterExecutionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default SdkResponse modifyResponse(AfterExecutionContext execution, ExecutionAttributes executionAttributes) {
         return execution.response();
     }
 
-    default void afterExecution(AfterExecutionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void afterExecution(AfterExecutionContext execution, ExecutionAttributes executionAttributes) {
 
     }
 
-    default void onExecutionFailure(FailedExecutionContext execution, ExecutionAttributes executionAttributes)
-            throws ExecutionInterceptorException {
+    default void onExecutionFailure(FailedExecutionContext execution, ExecutionAttributes executionAttributes) {
 
     }
 }
