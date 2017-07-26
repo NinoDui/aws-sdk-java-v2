@@ -18,7 +18,9 @@ package software.amazon.awssdk.http;
 import static software.amazon.awssdk.utils.FunctionalUtils.invokeSafely;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -39,6 +41,7 @@ import software.amazon.awssdk.runtime.transform.VoidStaxUnmarshaller;
 import software.amazon.awssdk.sync.StreamingResponseHandler;
 import software.amazon.awssdk.util.StringUtils;
 import software.amazon.awssdk.utils.FunctionalUtils.UnsafeFunction;
+import software.amazon.awssdk.utils.IoUtils;
 
 /**
  * Default implementation of HttpResponseHandler that handles a successful

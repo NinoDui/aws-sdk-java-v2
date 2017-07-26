@@ -45,6 +45,6 @@ public class AfterTransmissionExecutionInterceptorsStage
         // AbortedExceptionClientExecutionTimerIntegrationTest
         AmazonHttpClient.checkInterrupted(interceptorContext.httpResponse());
 
-        return input;
+        return new Pair<>(input.left(), interceptorContext.httpResponse());
     }
 }

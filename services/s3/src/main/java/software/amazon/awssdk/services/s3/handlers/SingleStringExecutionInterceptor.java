@@ -26,12 +26,14 @@ import java.util.Collections;
 import java.util.List;
 import software.amazon.awssdk.SdkRequest;
 import software.amazon.awssdk.annotation.ReviewBeforeRelease;
+import software.amazon.awssdk.http.HttpStatusCodes;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
 import software.amazon.awssdk.interceptor.ExecutionAttributes;
 import software.amazon.awssdk.interceptor.ExecutionInterceptor;
 import software.amazon.awssdk.interceptor.context.BeforeUnmarshallingContext;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest;
+import software.amazon.awssdk.util.SdkHttpUtils;
 import software.amazon.awssdk.utils.IoUtils;
 
 /**
@@ -51,8 +53,12 @@ public final class SingleStringExecutionInterceptor implements ExecutionIntercep
     @Override
     @ReviewBeforeRelease("Change to use instanceof on request object after request handlers refactor")
     public SdkHttpFullResponse modifyHttpResponse(BeforeUnmarshallingContext execution, ExecutionAttributes executionAttributes) {
-        SdkRequest request = execution.request();
+        // Only modify successful responses
+        if (execution.httpResponse().getStatusCode() / 100 != HttpStatusCodes.OK / 100) {
+            return execution.httpResponse();
+        }
 
+        SdkRequest request = execution.request();
         if (request instanceof GetBucketPolicyRequest) {
             return updateGetBucketPolicyResponse(execution.httpResponse());
         } else if (request instanceof GetBucketLocationRequest) {

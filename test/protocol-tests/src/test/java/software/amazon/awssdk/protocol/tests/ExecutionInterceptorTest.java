@@ -232,8 +232,9 @@ public class ExecutionInterceptorTest {
         validateArgs(modifyResponseArg.getValue(), "1", "2", "3", null);
         validateArgs(afterExecutionArg.getValue(), "1", "2", "3", "4");
 
-        verify(postRequestedFor(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).withHeader("x-amz-integer", equalTo("2")));
-        stubFor(post(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH)).willReturn(aResponse().withStatus(200).withBody("")));
+        verify(postRequestedFor(urlPathEqualTo(MEMBERS_IN_HEADERS_PATH))
+                       .withHeader("x-amz-string", equalTo("1"))
+                       .withHeader("x-amz-integer", equalTo("2")));
 
         // Verify afterExecution gets same response as the one returned by client
         if (expectedException == null) {
@@ -286,12 +287,11 @@ public class ExecutionInterceptorTest {
         });
         assertThat(failedExecutionArg.getValue().httpResponse()).hasValueSatisfying(httpResponse -> {
             assertThat(httpResponse.getFirstHeaderValue("x-amz-integer")).hasValue("3");
-            assertThat(httpResponse.getFirstHeaderValue("x-amz-string")).hasValue("4");
         });
 
         if (expectResponse) {
             assertThat(failedExecutionArg.getValue().response().map(MembersInHeadersResponse.class::cast)).hasValueSatisfying(response -> {
-                assertThat(response.integerMember()).isEqualTo("3");
+                assertThat(response.integerMember()).isEqualTo(3);
                 assertThat(response.stringMember()).isEqualTo("4");
             });
         } else {
@@ -324,9 +324,21 @@ public class ExecutionInterceptorTest {
                               String expectedResponseIntegerHeaderValue, String expectedResponseStringMemberValue) {
         validateArgs(context, expectedStringMemberValue, expectedIntegerHeaderValue, expectedResponseIntegerHeaderValue);
         MembersInHeadersResponse response = (MembersInHeadersResponse) context.response();
-        assertThat(response.integerMember()).isEqualTo(expectedResponseIntegerHeaderValue);
+        assertThat(response.integerMember()).isEqualTo(toInt(expectedResponseIntegerHeaderValue));
         assertThat(response.stringMember()).isEqualTo(expectedResponseStringMemberValue);
     }
+
+    private Integer toInt(String stringInteger) {
+        return stringInteger == null ? null : Integer.parseInt(stringInteger);
+    }
+
+    //    private <T> boolean valueMatchesExpected(Optional<T> optionalToCheck, T expectedValue) {
+//        if (expectedValue == null) {
+//            assertThat(optionalToCheck).isNotPresent();
+//        } else {
+//            assertThat(optionalToCheck).hasValue(expectedValue);
+//        }
+//    }
 
     private ProtocolRestJsonClient client(ExecutionInterceptor interceptor) {
         return initializeAndBuild(ProtocolRestJsonClient.builder(), interceptor);

@@ -40,10 +40,10 @@ public class ExecutionInterceptorChain {
     public InterceptorContext modifyRequest(InterceptorContext context, ExecutionAttributes executionAttributes) {
         InterceptorContext result = context;
         for (ExecutionInterceptor interceptor : interceptors) {
-            SdkRequest interceptorResult = interceptor.modifyRequest(context, executionAttributes);
-            validateInterceptorResult(context.request(), interceptorResult, interceptor, "modifyRequest");
+            SdkRequest interceptorResult = interceptor.modifyRequest(result, executionAttributes);
+            validateInterceptorResult(result.request(), interceptorResult, interceptor, "modifyRequest");
 
-            result = context.modify(b -> b.request(interceptorResult));
+            result = result.modify(b -> b.request(interceptorResult));
         }
         return result;
     }
@@ -60,10 +60,10 @@ public class ExecutionInterceptorChain {
                                                 ExecutionAttributes executionAttributes) {
         InterceptorContext result = context;
         for (ExecutionInterceptor interceptor : interceptors) {
-            SdkHttpFullRequest interceptorResult = interceptor.modifyHttpRequest(context, executionAttributes);
-            validateInterceptorResult(context.httpRequest(), interceptorResult, interceptor, "modifyHttpRequest");
+            SdkHttpFullRequest interceptorResult = interceptor.modifyHttpRequest(result, executionAttributes);
+            validateInterceptorResult(result.httpRequest(), interceptorResult, interceptor, "modifyHttpRequest");
 
-            result = context.modify(b -> b.httpRequest(interceptorResult));
+            result = result.modify(b -> b.httpRequest(interceptorResult));
         }
         return result;
     }
@@ -80,10 +80,10 @@ public class ExecutionInterceptorChain {
                                                  ExecutionAttributes executionAttributes) {
         InterceptorContext result = context;
         for (int i = interceptors.size() - 1; i >= 0; i--) {
-            SdkHttpFullResponse interceptorResult = interceptors.get(i).modifyHttpResponse(context, executionAttributes);
-            validateInterceptorResult(context.httpResponse(), interceptorResult, interceptors.get(i), "modifyHttpResponse");
+            SdkHttpFullResponse interceptorResult = interceptors.get(i).modifyHttpResponse(result, executionAttributes);
+            validateInterceptorResult(result.httpResponse(), interceptorResult, interceptors.get(i), "modifyHttpResponse");
 
-            result = context.modify(b -> b.httpResponse(interceptorResult));
+            result = result.modify(b -> b.httpResponse(interceptorResult));
         }
         return result;
     }
@@ -99,10 +99,10 @@ public class ExecutionInterceptorChain {
     public InterceptorContext modifyResponse(InterceptorContext context, ExecutionAttributes executionAttributes) {
         InterceptorContext result = context;
         for (int i = interceptors.size() - 1; i >= 0; i--) {
-            SdkResponse interceptorResult = interceptors.get(i).modifyResponse(context, executionAttributes);
-            validateInterceptorResult(context.response(), interceptorResult, interceptors.get(i), "modifyResponse");
+            SdkResponse interceptorResult = interceptors.get(i).modifyResponse(result, executionAttributes);
+            validateInterceptorResult(result.response(), interceptorResult, interceptors.get(i), "modifyResponse");
 
-            result = context.modify(b -> b.response(interceptorResult));
+            result = result.modify(b -> b.response(interceptorResult));
         }
         return result;
     }

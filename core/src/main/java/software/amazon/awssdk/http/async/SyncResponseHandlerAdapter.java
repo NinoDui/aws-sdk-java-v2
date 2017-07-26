@@ -43,7 +43,7 @@ public class SyncResponseHandlerAdapter<T> implements SdkHttpResponseHandler<T> 
     private ByteArrayOutputStream baos;
     private final Function<SdkHttpFullResponse, HttpResponse> httpResponseAdapter;
     private final ExecutionAttributes executionAttributes;
-    private HttpResponse httpResponse;
+    private SdkHttpFullResponse.Builder httpResponse;
 
     public SyncResponseHandlerAdapter(HttpResponseHandler<T> responseHandler,
                                       Function<SdkHttpFullResponse, HttpResponse> httpResponseAdapter,
@@ -55,7 +55,7 @@ public class SyncResponseHandlerAdapter<T> implements SdkHttpResponseHandler<T> 
 
     @Override
     public void headersReceived(SdkHttpResponse response) {
-        this.httpResponse = httpResponseAdapter.apply((SdkHttpFullResponse) response);
+        this.httpResponse = ((SdkHttpFullResponse) response).toBuilder();
     }
 
     @Override
@@ -79,9 +79,9 @@ public class SyncResponseHandlerAdapter<T> implements SdkHttpResponseHandler<T> 
         try {
             // Once we've buffered all the content we can invoke the response handler
             if (baos != null) {
-                httpResponse.setContent(new ByteArrayInputStream(baos.toByteArray()));
+                httpResponse.content(new ByteArrayInputStream(baos.toByteArray()));
             }
-            return responseHandler.handle(httpResponse, executionAttributes);
+            return responseHandler.handle(httpResponseAdapter.apply(httpResponse.build()), executionAttributes);
         } catch (Exception e) {
             throw Throwables.failure(e);
         }

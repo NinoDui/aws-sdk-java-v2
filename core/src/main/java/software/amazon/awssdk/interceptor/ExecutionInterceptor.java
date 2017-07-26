@@ -98,12 +98,21 @@ public interface ExecutionInterceptor {
 
     }
 
-    default void afterTransmission(AfterTransmissionContext execution, ExecutionAttributes executionAttributes) {
+    //    default void afterHttpResponseHeadersReceived() {
+    //
+    //    }
+    //
+    //    default SdkHttpResponse modifyHttpResponseHeaders() {
+    //
+    //    }
 
+    default void afterTransmission(AfterTransmissionContext execution, ExecutionAttributes executionAttributes) {
+        // TODO: Null content for async streaming
     }
 
     default SdkHttpFullResponse modifyHttpResponse(BeforeUnmarshallingContext execution,
                                                    ExecutionAttributes executionAttributes) {
+        // TODO: Null content for async streaming
         return execution.httpResponse();
     }
 

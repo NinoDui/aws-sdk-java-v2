@@ -35,6 +35,7 @@ import software.amazon.awssdk.handlers.AwsExecutionAttributes;
 import software.amazon.awssdk.http.AmazonAsyncHttpClient;
 import software.amazon.awssdk.http.ExecutionContext;
 import software.amazon.awssdk.http.HttpResponse;
+import software.amazon.awssdk.http.HttpResponseHandler;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.http.SdkHttpFullRequestAdapter;
 import software.amazon.awssdk.http.SdkHttpFullResponse;
@@ -43,6 +44,7 @@ import software.amazon.awssdk.http.async.SdkHttpRequestProvider;
 import software.amazon.awssdk.http.async.SdkHttpResponseHandler;
 import software.amazon.awssdk.http.async.SyncResponseHandlerAdapter;
 import software.amazon.awssdk.interceptor.ExecutionAttributes;
+import software.amazon.awssdk.interceptor.context.InterceptorContext;
 import software.amazon.awssdk.metrics.spi.AwsRequestMetrics;
 import software.amazon.awssdk.util.CredentialUtils;
 import software.amazon.awssdk.util.Throwables;
@@ -106,7 +108,8 @@ public class AsyncClientHandlerImpl extends AsyncClientHandler {
                                         .advancedOption(InternalAdvancedClientOption.CRC32_FROM_COMPRESSED_DATA_ENABLED);
 
         Function<SdkHttpFullResponse, HttpResponse> responseAdapter
-                = r -> SdkHttpResponseAdapter.adapt(calculateCrc32FromCompressedData, marshalled, r);
+                = r -> SdkHttpResponseAdapter.adapt(calculateCrc32FromCompressedData, marshalled,
+                                                    beforeUnmarshalling(r, executionContext));
 
         SdkHttpResponseHandler<OutputT> responseHandler = resolveResponseHandler(executionParams, responseAdapter,
                                                                                  executionContext.executionAttributes());
@@ -226,5 +229,25 @@ public class AsyncClientHandlerImpl extends AsyncClientHandler {
                      .executionContext(executionContext)
                      .errorResponseHandler(errorResponseHandler)
                      .execute(responseHandler);
+    }
+
+    private SdkHttpFullResponse beforeUnmarshalling(SdkHttpFullResponse response, ExecutionContext context) {
+        // Update interceptor context to include response
+        InterceptorContext interceptorContext =
+                context.interceptorContext().modify(b -> b.httpResponse(response));
+
+        // interceptors.afterTransmission
+        context.interceptorChain().afterTransmission(interceptorContext, context.executionAttributes());
+
+        // interceptors.modifyHttpResponse
+        interceptorContext = context.interceptorChain().modifyHttpResponse(interceptorContext, context.executionAttributes());
+
+        // interceptors.beforeUnmarshalling
+        context.interceptorChain().beforeUnmarshalling(interceptorContext, context.executionAttributes());
+
+        // Store updated context
+        context.interceptorContext(interceptorContext);
+
+        return interceptorContext.httpResponse();
     }
 }

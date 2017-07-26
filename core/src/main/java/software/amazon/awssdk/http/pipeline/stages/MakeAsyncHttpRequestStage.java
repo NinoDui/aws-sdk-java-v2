@@ -178,31 +178,10 @@ public class MakeAsyncHttpRequestStage<OutputT>
             SdkHttpFullResponse httpFullResponse = (SdkHttpFullResponse) this.response;
 
             publishProgress(listener, ProgressEventType.HTTP_REQUEST_COMPLETED_EVENT);
-            httpFullResponse = beforeUnmarshalling(httpFullResponse);
             final HttpResponse httpResponse = SdkHttpResponseAdapter.adapt(false, request, httpFullResponse);
             Response<OutputT> toReturn = handleResponse(httpResponse);
             future.complete(toReturn);
             return toReturn;
-        }
-
-        private SdkHttpFullResponse beforeUnmarshalling(SdkHttpFullResponse response) {
-            // Update interceptor context
-            InterceptorContext interceptorContext =
-                    context.executionContext().interceptorContext().modify(b -> b.httpResponse(response));
-
-            // interceptors.afterTransmission
-            context.interceptorChain().afterTransmission(interceptorContext, context.executionAttributes());
-
-            // interceptors.modifyHttpResponse
-            interceptorContext = context.interceptorChain().modifyHttpResponse(interceptorContext, context.executionAttributes());
-
-            // interceptors.beforeUnmarshalling
-            context.interceptorChain().beforeUnmarshalling(interceptorContext, context.executionAttributes());
-
-            // Store updated context
-            context.executionContext().interceptorContext(interceptorContext);
-
-            return interceptorContext.httpResponse();
         }
 
         /**
