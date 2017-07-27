@@ -33,7 +33,6 @@ import software.amazon.awssdk.interceptor.ExecutionInterceptor;
 import software.amazon.awssdk.interceptor.context.BeforeUnmarshallingContext;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest;
-import software.amazon.awssdk.util.SdkHttpUtils;
 import software.amazon.awssdk.utils.IoUtils;
 
 /**
